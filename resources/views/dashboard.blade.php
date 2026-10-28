@@ -1,561 +1,87 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Dashboard | TanyAku</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f7f7f9;
-            color: #29252b;
-        }
-
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 245px;
-            background: #641b32;
-            color: white;
-            padding: 28px 18px;
-            flex-shrink: 0;
-        }
-
-        .brand {
-            font-size: 25px;
-            font-weight: bold;
-            padding: 0 12px;
-            margin-bottom: 8px;
-        }
-
-        .brand-description {
-            padding: 0 12px;
-            color: #e8cbd4;
-            font-size: 12px;
-            margin-bottom: 38px;
-        }
-
-        .menu-label {
-            padding: 0 12px;
-            color: #e8cbd4;
-            font-size: 11px;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-
-        .menu {
-            display: block;
-            padding: 13px 14px;
-            margin-bottom: 8px;
-            color: #f5e9ed;
-            text-decoration: none;
-            border-radius: 9px;
-            font-size: 14px;
-        }
-
-        .menu.active,
-        .menu:hover {
-            background: #852c49;
-            color: white;
-        }
-
-        .sidebar-bottom {
-            margin-top: 45px;
-            padding: 0 12px;
-            font-size: 12px;
-            line-height: 1.7;
-            color: #e8cbd4;
-        }
-
-        .main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .topbar {
-            min-height: 82px;
-            background: white;
-            border-bottom: 1px solid #ece8eb;
-            padding: 20px 34px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .topbar h1 {
-            font-size: 22px;
-            margin: 0 0 6px;
-        }
-
-        .topbar p {
-            margin: 0;
-            color: #88818a;
-            font-size: 13px;
-        }
-
-        .profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .avatar {
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: #f4e5ea;
-            color: #641b32;
-            font-weight: bold;
-        }
-
-        .profile-name {
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .profile-role {
-            font-size: 12px;
-            color: #88818a;
-            margin-top: 5px;
-        }
-
-        .content {
-            padding: 32px 34px;
-            max-width: 1500px;
-            margin: auto;
-        }
-
-        .welcome {
-            padding: 28px;
-            border-radius: 14px;
-            background: linear-gradient(120deg, #641b32, #8a3550);
-            color: white;
-            margin-bottom: 28px;
-        }
-
-        .welcome h2 {
-            font-size: 24px;
-            margin: 0 0 10px;
-        }
-
-        .welcome p {
-            margin: 0;
-            color: #f2dfe5;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .section-title {
-            font-size: 17px;
-            margin: 0 0 18px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 23px;
-            border-radius: 12px;
-            border: 1px solid #eee9ec;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: #817983;
-            margin-bottom: 16px;
-        }
-
-        .stat-number {
-            font-size: 30px;
-            font-weight: bold;
-            color: #641b32;
-            margin-bottom: 8px;
-        }
-
-        .stat-description {
-            color: #948c95;
-            font-size: 12px;
-        }
-
-        .table-card {
-            background: white;
-            border: 1px solid #eee9ec;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .table-heading {
-            padding: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .table-heading h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-
-        .view-all {
-            color: #812b47;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 650px;
-        }
-
-        th {
-            background: #faf7f8;
-            color: #817983;
-            font-size: 12px;
-            font-weight: normal;
-            text-align: left;
-            padding: 15px 22px;
-        }
-
-        td {
-            padding: 17px 22px;
-            border-top: 1px solid #f0ecef;
-            font-size: 13px;
-        }
-
-        .dataset-name {
-            font-weight: bold;
-            color: #39313a;
-        }
-
-        .muted {
-            color: #918994;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            background: #e7f7ed;
-            color: #247a46;
-        }
-
-        .badge-other {
-            background: #fff1d9;
-            color: #95651b;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 38px 20px;
-            color: #918994;
-            line-height: 1.8;
-        }
-
-        .footer {
-            padding: 25px 0 5px;
-            text-align: center;
-            color: #a099a1;
-            font-size: 12px;
-        }
-
-        .logout-form {
-            margin-top: 28px;
-            padding: 0 8px;
-        }
-
-        .logout-button {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid #a65d75;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .logout-button:hover {
-            background: #852c49;
-        }
-
-        @media (max-width: 900px) {
-            .sidebar {
-                width: 200px;
-            }
-
-            .content {
-                padding: 25px 20px;
-            }
-
-            .topbar {
-                padding: 20px;
-            }
-
-            .stats {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 600px) {
-            .layout {
-                display: block;
-            }
-
-            .sidebar {
-                width: 100%;
-                padding: 18px;
-            }
-
-            .brand {
-                margin-bottom: 5px;
-            }
-
-            .brand-description {
-                margin-bottom: 20px;
-            }
-
-            .sidebar-bottom,
-            .menu-label {
-                display: none;
-            }
-
-            .menu {
-                display: inline-block;
-                margin: 10px 4px 0 0;
-                padding: 10px;
-            }
-
-            .logout-form {
-                margin-top: 12px;
-            }
-
-            .topbar {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .stats {
-                grid-template-columns: 1fr;
-            }
-
-            .welcome {
-                padding: 22px;
-            }
-
-            .welcome h2 {
-                font-size: 20px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-<div class="layout">
-
-    <aside class="sidebar">
-        <div class="brand">TanyAku</div>
-        <div class="brand-description">Data Management & Analytics</div>
-
-        <div class="menu-label">MENU UTAMA</div>
-
-        <a href="{{ route('dashboard') }}" class="menu active">
-            Dashboard
-        </a>
-
-        @if ($user->role?->permissions?->contains('code', 'dataset.view'))
-            <a href="{{ route('datasets.index') }}" class="menu">
-                Kelola Dataset
-            </a>
-        @endif
-
-        <div class="sidebar-bottom">
-            <div>Pengguna aktif</div>
-            <strong>{{ $user->name }}</strong>
-            <div>{{ $departmentName }}</div>
+@extends('layouts.app')
+
+@section('title', 'Beranda')
+
+@section('content')
+    <section class="welcome-heading">
+        <div>
+            <h1>Halo, {{ $user->name }}</h1>
+            <p class="welcome-copy">Keputusan yang lebih baik, dimulai dari data.</p>
         </div>
+        <span class="department-badge"><span class="badge-dot"></span>{{ $departmentName }}</span>
+    </section>
 
-        <form method="POST" action="{{ route('logout') }}" class="logout-form">
-            @csrf
-            <button type="submit" class="logout-button">
-                Logout
-            </button>
-        </form>
-    </aside>
-
-    <main class="main">
-
-        <header class="topbar">
-            <div>
-                <h1>Dashboard</h1>
-                <p>Ringkasan data dan aktivitas TanyAku</p>
+    <section class="hero-banner" aria-label="Insight berbasis data">
+        <div class="hero-copy">
+            <p class="hero-eyebrow"><span></span>INSIGHT BERBASIS DATA</p>
+            <h2>Dari data menjadi arah.</h2>
+            <p>Kenali pola, temukan peluang, dan ambil langkah berikutnya bersama TanyAku.</p>
+            @if ($user->role?->permissions?->contains('code', 'dataset.view'))
+                <a class="hero-cta" href="{{ route('datasets.index') }}">Mulai analisis <span aria-hidden="true">→</span></a>
+            @else
+                <span class="hero-cta hero-cta-disabled">Mulai analisis <span aria-hidden="true">→</span></span>
+            @endif
+        </div>
+        <i class="hero-glow" aria-hidden="true"></i>
+        <div class="hero-art" aria-hidden="true">
+            <div class="analytics-card">
+                <div class="chart-area"><span class="chart-grid grid-one"></span><span class="chart-grid grid-two"></span><span class="chart-grid grid-three"></span>
+                    <i class="bar bar-one"></i><i class="bar bar-two"></i><i class="bar bar-three"></i><i class="bar bar-four"></i>
+                </div>
+                <span class="art-star">★</span>
             </div>
+            <div class="floating-chip"><span></span><strong>Live Metrics</strong></div>
+        </div>
+    </section>
 
-            <div class="profile">
-                <div class="avatar">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
+    <section class="dashboard-section">
+        <div class="section-heading">
+            <div><h2>Ringkasan Metrik Terkini</h2></div>
+            <span class="updated-label"><i></i>Data terkini</span>
+        </div>
+        <div class="metric-grid">
+            <article class="metric-card">
+                <div class="metric-top"><span>Total Dataset</span><span class="metric-icon icon-cyan"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg></span></div>
+                <strong class="metric-value">{{ number_format($totalDatasets) }}</strong><p>Dataset yang dapat kamu akses</p>
+            </article>
+            <article class="metric-card">
+                <div class="metric-top"><span>Total Record</span><span class="metric-icon icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 12h16M4 18.5h16"/><circle cx="7" cy="5.5" r="1"/><circle cx="7" cy="12" r="1"/><circle cx="7" cy="18.5" r="1"/></svg></span></div>
+                <strong class="metric-value">{{ number_format($totalRecords) }}</strong><p>Baris data di dataset yang dapat kamu akses</p>
+            </article>
+            <article class="metric-card">
+                <div class="metric-top"><span>Dataset Siap Digunakan</span><span class="metric-icon icon-green"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/><circle cx="12" cy="12" r="9"/></svg></span></div>
+                <strong class="metric-value">{{ number_format($readyDatasets) }}</strong><p>Dataset dengan status siap digunakan</p>
+            </article>
+        </div>
+    </section>
 
-                <div>
-                    <div class="profile-name">{{ $user->name }}</div>
-                    <div class="profile-role">
-                        {{ $user->role?->name ?? 'Pengguna' }}
-                        · {{ $departmentName }}
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="content">
-
-            <section class="welcome">
-                <h2>Selamat datang, {{ $user->name }}!</h2>
-                <p>
-                    Kelola dan pantau data kamu melalui satu platform.
-                    Berikut ringkasan dataset yang dapat kamu akses.
-                </p>
-            </section>
-
-            <h2 class="section-title">Ringkasan Data</h2>
-
-            <section class="stats">
-
-                <div class="stat-card">
-                    <div class="stat-label">Total Dataset</div>
-                    <div class="stat-number">
-                        {{ number_format($totalDatasets) }}
-                    </div>
-                    <div class="stat-description">
-                        Dataset yang dapat kamu akses
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Total Record</div>
-                    <div class="stat-number">
-                        {{ number_format($totalRecords) }}
-                    </div>
-                    <div class="stat-description">
-                        Baris data dalam dataset yang dapat kamu akses
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-label">Dataset Siap Digunakan</div>
-                    <div class="stat-number">
-                        {{ number_format($readyDatasets) }}
-                    </div>
-                    <div class="stat-description">
-                        Dataset dengan status READY
-                    </div>
-                </div>
-
-            </section>
-
-            <section class="table-card">
-
-                <div class="table-heading">
-                    <h3>Dataset Terbaru</h3>
-
+    <section class="dashboard-section activity-section">
+        <div class="section-heading">
+            <div><h2>Aktivitas Analisis Terbaru</h2></div>
+            @if ($user->role?->permissions?->contains('code', 'dataset.view'))
+                <a class="text-link" href="{{ route('datasets.index') }}">Lihat Semua <span aria-hidden="true">→</span></a>
+            @endif
+        </div>
+        <div class="activity-list">
+            @forelse ($recentDatasets as $dataset)
+                <article class="activity-card">
+                    <div class="activity-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h9l5 5v10A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M14 4.5v5h5M8.5 14h7M8.5 17h7"/></svg></div>
+                    <div class="activity-info"><strong>{{ $dataset->name }}</strong><span>{{ $dataset->department?->name ?? $departmentName }} <i>·</i> {{ $dataset->created_at?->format('d M Y') ?? '-' }}</span></div>
+                    <span class="status-badge {{ $dataset->status === 'READY' ? 'status-ready' : 'status-other' }}"><i></i>{{ $dataset->status === 'READY' ? 'Siap digunakan' : $dataset->status }}</span>
                     @if ($user->role?->permissions?->contains('code', 'dataset.view'))
-                        <a href="{{ route('datasets.index') }}" class="view-all">
-                            Lihat semua
-                        </a>
+                        <a class="button button-quiet activity-action" href="{{ route('datasets.show', $dataset) }}">Detail</a>
+                    @endif
+                </article>
+            @empty
+                <div class="empty-state">
+                    <span class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h9l5 5v10A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M14 4.5v5h5M8.5 14h7M8.5 17h4"/></svg></span>
+                    <strong>Belum ada dataset yang tersedia.</strong>
+                    <p>Dataset workspace kamu akan muncul di sini setelah diunggah.</p>
+                    @if ($user->role?->permissions?->contains('code', 'dataset.create'))
+                        <a class="button button-primary" href="{{ route('datasets.create') }}">Unggah dataset</a>
                     @endif
                 </div>
-
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nama Dataset</th>
-                                <th>Divisi</th>
-                                <th>Pengunggah</th>
-                                <th>Tanggal</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @forelse ($recentDatasets as $dataset)
-                                <tr>
-                                    <td>
-                                        <div class="dataset-name">
-                                            {{ $dataset->name }}
-                                        </div>
-                                        <div class="muted">
-                                            {{ strtoupper($dataset->file_type) }}
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        {{ $dataset->department?->name ?? '-' }}
-                                    </td>
-
-                                    <td>
-                                        {{ $dataset->uploader?->name ?? '-' }}
-                                    </td>
-
-                                    <td>
-                                        {{ $dataset->created_at?->format('d M Y') ?? '-' }}
-                                    </td>
-
-                                    <td>
-                                        @if ($dataset->status === 'READY')
-                                            <span class="badge">Siap digunakan</span>
-                                        @else
-                                            <span class="badge badge-other">
-                                                {{ $dataset->status }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="empty">
-                                        Belum ada dataset yang tersedia.<br>
-                                        Dataset yang kamu unggah akan muncul di sini.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-            </section>
-
-            <div class="footer">
-                TanyAku · Data Management & Analytics Platform
-            </div>
-
+            @endforelse
         </div>
-    </main>
-</div>
-</body>
-</html>
+    </section>
+@endsection

@@ -10,7 +10,6 @@ use Illuminate\Validation\Rule;
 use App\Models\DatasetRecord;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Http\UploadedFile;
@@ -207,15 +206,19 @@ class DatasetController extends Controller
     }
 
     public function show(Dataset $dataset)
-    {
-        abort_unless($this->can('dataset.view'), 403);
+{
+    abort_unless($this->can('dataset.view'), 403);
 
-        $this->ensureDatasetVisible($dataset);
+    $this->ensureDatasetVisible($dataset);
 
-        $dataset->load(['department', 'uploader', 'records']);
+    $dataset->load(['department', 'uploader']);
 
-        return view('datasets.show', compact('dataset'));
-    }
+    $records = DatasetRecord::where('dataset_id', $dataset->id)
+        ->latest('id')
+        ->paginate(20);
+
+    return view('datasets.show', compact('dataset', 'records'));
+}
 
     public function edit(Dataset $dataset)
     {
@@ -290,68 +293,278 @@ class DatasetController extends Controller
     }
 
     private function parseDatasetFile(
-        string $path,
-        string $extension
-    ): array {
-        if ($extension === 'csv') {
-            $file = fopen($path, 'r');
+    string $path,
+    string $extension
+): array {
+    // CSV tetap menggunakan proses yang sudah ada.
+    if ($extension === 'csv') {
+        $file = fopen($path, 'r');
 
-            if ($file === false) {
-                throw new \RuntimeException('File CSV tidak dapat dibaca.');
-            }
+        if ($file === false) {
+            throw new \RuntimeException(
+                'File CSV tidak dapat dibaca.'
+            );
+        }
 
-            try {
-                $header = fgetcsv($file);
+        try {
+            $header = fgetcsv($file);
 
-                if ($header === false || empty($header)) {
-                    throw new \RuntimeException('File CSV kosong atau tidak memiliki header.');
-                }
-
-                $header = array_map(
-                    fn ($value) => trim((string) $value),
-                    $header
+            if ($header === false || empty($header)) {
+                throw new \RuntimeException(
+                    'File CSV kosong atau tidak memiliki header.'
                 );
+            }
 
-                if (count(array_filter($header, fn ($value) => $value !== '')) !== count($header)) {
-                    throw new \RuntimeException('Semua kolom CSV harus memiliki nama.');
+            // Hapus BOM jika file CSV dibuat menggunakan Excel.
+            $header[0] = preg_replace(
+                '/^\xEF\xBB\xBF/',
+                '',
+                (string) $header[0]
+            );
+
+            $header = array_map(
+                fn ($value) => trim((string) $value),
+                $header
+            );
+
+            if (
+                count(array_filter(
+                    $header,
+                    fn ($value) => $value !== ''
+                )) !== count($header)
+            ) {
+                throw new \RuntimeException(
+                    'Semua kolom CSV harus memiliki nama.'
+                );
+            }
+
+            if (count(array_unique($header)) !== count($header)) {
+                throw new \RuntimeException(
+                    'Nama kolom CSV tidak boleh duplikat.'
+                );
+            }
+
+            $rows = [];
+
+            while (($row = fgetcsv($file)) !== false) {
+                if (
+                    count(array_filter(
+                        $row,
+                        fn ($value) =>
+                            $value !== null && trim((string) $value) !== ''
+                    )) === 0
+                ) {
+                    continue;
                 }
 
-                $rows = [];
-
-                while (($row = fgetcsv($file)) !== false) {
-                    if (count(array_filter($row, fn ($value) => $value !== null && $value !== '')) === 0) {
-                        continue;
-                    }
-
-                    if (count($row) !== count($header)) {
-                        throw new \RuntimeException('Jumlah kolom pada baris CSV tidak konsisten.');
-                    }
-
-                    $rows[] = array_combine($header, $row);
+                if (count($row) !== count($header)) {
+                    throw new \RuntimeException(
+                        'Jumlah kolom pada baris CSV tidak konsisten.'
+                    );
                 }
 
-                return $rows;
-            } finally {
-                fclose($file);
+                $rows[] = array_combine($header, $row);
             }
+
+            return $rows;
+        } finally {
+            fclose($file);
         }
-
-        $import = new \App\Imports\DatasetImport();
-
-        Excel::import($import, $path);
-
-        $rows = $import->rows;
-
-        if (empty($rows)) {
-            throw new \RuntimeException('File Excel kosong atau tidak memiliki data.');
-        }
-
-        foreach ($rows as $row) {
-            if (!is_array($row)) {
-                throw new \RuntimeException('Format baris Excel tidak valid.');
-            }
-        }
-
-        return $rows;
     }
+
+    // Membaca workbook Excel, termasuk seluruh sheet.
+    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+
+    $bestSheet = null;
+    $bestHeaderRow = null;
+    $bestScore = 0;
+
+    foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
+        $highestRow = $worksheet->getHighestDataRow();
+        $highestColumn = $worksheet->getHighestDataColumn();
+
+        // Header biasanya berada di bagian awal worksheet.
+        $scanLimit = min($highestRow, 50);
+
+        for ($rowNumber = 1; $rowNumber <= $scanLimit; $rowNumber++) {
+            $values = $worksheet->rangeToArray(
+                "A{$rowNumber}:{$highestColumn}{$rowNumber}",
+                null,
+                true,
+                true,
+                false
+            )[0];
+
+            $nonEmpty = array_filter(
+                $values,
+                fn ($value) =>
+                    $value !== null && trim((string) $value) !== ''
+            );
+
+            // Baris judul biasanya hanya memiliki satu sel terisi.
+            if (count($nonEmpty) < 3) {
+                continue;
+            }
+
+            // Header harus berisi nama kolom, bukan formula.
+            $textHeaders = array_filter(
+                $nonEmpty,
+                fn ($value) =>
+                    is_string($value)
+                    && !str_starts_with(trim($value), '=')
+                    && !is_numeric($value)
+            );
+
+            $score = count($textHeaders) * 10
+                + count($nonEmpty);
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestSheet = $worksheet;
+                $bestHeaderRow = $rowNumber;
+            }
+        }
+    }
+
+    if ($bestSheet === null || $bestHeaderRow === null) {
+        $spreadsheet->disconnectWorksheets();
+
+        throw new \RuntimeException(
+            'Header tabel tidak ditemukan pada workbook Excel.'
+        );
+    }
+
+    $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString(
+        $bestSheet->getHighestDataColumn()
+    );
+
+    $header = [];
+
+    for ($column = 1; $column <= $highestColumnIndex; $column++) {
+        $value = $bestSheet->getCell([$column, $bestHeaderRow])
+            ->getCalculatedValue();
+
+        $header[] = trim((string) ($value ?? ''));
+    }
+
+    // Buang kolom kosong di bagian akhir header.
+    while (!empty($header) && end($header) === '') {
+        array_pop($header);
+    }
+
+    if (
+        count($header) < 3
+        || in_array('', $header, true)
+        || count(array_unique($header)) !== count($header)
+    ) {
+        $spreadsheet->disconnectWorksheets();
+
+        throw new \RuntimeException(
+            'Header Excel kosong, tidak lengkap, atau memiliki nama kolom duplikat.'
+        );
+    }
+
+    // Nama kolom dibuat konsisten sebagai key JSON.
+    $normalizedHeader = [];
+    $usedNames = [];
+
+    foreach ($header as $index => $name) {
+        $key = trim($name);
+
+        if ($key === '') {
+            $spreadsheet->disconnectWorksheets();
+
+            throw new \RuntimeException(
+                'Nama kolom Excel tidak boleh kosong.'
+            );
+        }
+
+        $key = preg_replace('/\s+/', '_', $key);
+        $key = mb_strtolower($key);
+
+        if (isset($usedNames[$key])) {
+            $spreadsheet->disconnectWorksheets();
+
+            throw new \RuntimeException(
+                'Nama kolom Excel tidak boleh duplikat.'
+            );
+        }
+
+        $usedNames[$key] = true;
+        $normalizedHeader[$index] = $key;
+    }
+
+    $rows = [];
+    $highestRow = $bestSheet->getHighestDataRow();
+
+    for (
+        $rowNumber = $bestHeaderRow + 1;
+        $rowNumber <= $highestRow;
+        $rowNumber++
+    ) {
+        $row = [];
+        $nonEmptyCount = 0;
+
+        foreach ($normalizedHeader as $column => $key) {
+            $cell = $bestSheet->getCell([
+                $column + 1,
+                $rowNumber,
+            ]);
+
+            $value = $cell->getCalculatedValue();
+
+            // Jangan menyimpan teks formula mentah jika tidak
+            // ada nilai hasil perhitungan yang tersedia.
+            if (
+                is_string($value)
+                && str_starts_with(trim($value), '=')
+            ) {
+                $value = null;
+            }
+
+            if ($value instanceof \DateTimeInterface) {
+                $value = $value->format('Y-m-d H:i:s');
+            }
+
+            if ($value !== null && $value !== '') {
+                $nonEmptyCount++;
+            }
+
+            $row[$key] = $value;
+        }
+
+        // Lewati baris kosong dan informasi periode di bagian bawah.
+        if ($nonEmptyCount === 0) {
+            continue;
+        }
+
+        $firstValue = mb_strtolower(
+            trim((string) reset($row))
+        );
+
+        if (str_starts_with($firstValue, 'periode:')) {
+            continue;
+        }
+
+        $rows[] = $row;
+
+        if (count($rows) > 10000) {
+            $spreadsheet->disconnectWorksheets();
+
+            throw new \RuntimeException(
+                'Dataset maksimal berisi 10.000 baris.'
+            );
+        }
+    }
+
+    $spreadsheet->disconnectWorksheets();
+
+    if (empty($rows)) {
+        throw new \RuntimeException(
+            'Tidak ada baris data setelah header Excel.'
+        );
+    }
+
+    return $rows;
+}
 }

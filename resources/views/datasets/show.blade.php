@@ -99,5 +99,91 @@
 
     <a href="{{ route('datasets.index') }}" class="secondary">Kembali ke Daftar</a>
 </div>
+
+@php
+    $previewRows = $records->getCollection();
+
+    $columns = $previewRows->isNotEmpty()
+        ? array_keys((array) $previewRows->first()->record_data)
+        : [];
+@endphp
+
+<section class="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">
+                Preview Data
+            </h2>
+
+            <p class="mt-1 text-sm text-gray-500">
+                Pratinjau isi dataset yang tersimpan di database.
+            </p>
+        </div>
+
+        <span class="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+            {{ $records->total() }} baris data
+        </span>
+    </div>
+
+    @if ($records->isEmpty())
+        <div class="rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center">
+            <p class="font-medium text-gray-700">
+                Belum ada data untuk ditampilkan.
+            </p>
+
+            <p class="mt-1 text-sm text-gray-500">
+                Pastikan file berhasil diproses saat diunggah.
+            </p>
+        </div>
+    @else
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full min-w-max border-collapse text-left text-sm">
+                <thead class="bg-gray-100 text-gray-700">
+                    <tr>
+                        @php
+                            $firstRecord = (array) $records->first()->record_data;
+                            $columns = array_keys($firstRecord);
+                        @endphp
+
+                        @foreach ($columns as $column)
+                            <th class="whitespace-nowrap border-b border-gray-200 px-4 py-3 font-semibold">
+                                {{ str_replace('_', ' ', ucfirst($column)) }}
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-100">
+                    @foreach ($records as $record)
+                        @php
+                            $row = (array) $record->record_data;
+                        @endphp
+
+                        <tr class="transition-colors hover:bg-gray-50">
+                            @foreach ($columns as $column)
+                                <td class="max-w-xs whitespace-normal break-words px-4 py-3 text-gray-600">
+                                    @php
+                                        $value = $row[$column] ?? '-';
+                                    @endphp
+
+                                    @if (is_array($value))
+                                        {{ json_encode($value, JSON_UNESCAPED_UNICODE) }}
+                                    @else
+                                        {{ $value === '' ? '-' : $value }}
+                                    @endif
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-5">
+            {{ $records->links() }}
+        </div>
+    @endif
+</section>
+
 </body>
 </html>

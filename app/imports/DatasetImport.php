@@ -3,9 +3,8 @@
 namespace App\Imports;
 
 use Maatwebsite\Excel\Concerns\ToArray;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class DatasetImport implements ToArray, WithHeadingRow
+class DatasetImport implements ToArray
 {
     public array $rows = [];
 

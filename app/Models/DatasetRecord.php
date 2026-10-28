@@ -13,11 +13,11 @@ class DatasetRecord extends Model
     ];
 
     protected function casts(): array
-    {
-        return [
-            'record_data' => 'array',
-        ];
-    }
+{
+    return [
+        'record_data' => 'array',
+    ];
+}
 
     public function dataset(): BelongsTo
     {

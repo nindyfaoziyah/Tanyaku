@@ -1,12 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DatasetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DatasetController;
+use Illuminate\Support\Facades\Route;
 
-// Redirect halaman utama ke login
-Route::redirect('/', '/login');
+Route::view('/', 'welcome')->name('home');
 
 // Route untuk pengguna yang belum login
 Route::middleware('guest')->group(function () {
@@ -14,16 +13,19 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])
         ->name('login');
 
+    Route::get('/login/check-email', [AuthController::class, 'checkEmail'])
+        ->middleware('throttle:30,1')
+        ->name('login.email-check');
+
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1');
 });
-
 // Route untuk pengguna yang sudah login
 Route::middleware('auth')->group(function () {
 
     // Dashboard
-  Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
@@ -76,5 +78,3 @@ Route::middleware('auth')->group(function () {
         ->name('datasets.show');
 
 });
-
-Route::redirect('/', '/login');

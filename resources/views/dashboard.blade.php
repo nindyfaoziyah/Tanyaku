@@ -3,6 +3,9 @@
 @section('title', 'Beranda')
 
 @section('content')
+    @if (strtoupper($user->role?->name ?? '') === 'HR')
+        @include('hr-dashboard')
+    @else
     <section class="welcome-heading">
         <div>
             <h1>Halo, {{ $user->name }}</h1>
@@ -84,4 +87,5 @@
             @endforelse
         </div>
     </section>
+    @endif
 @endsection
